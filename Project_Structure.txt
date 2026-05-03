@@ -1,0 +1,29 @@
+multi-agent-security-auditor/
+│
+├── client/                      # 🎨 STREAMLIT FRONTEND
+│   ├── app.py                   # Main UI application
+│   ├── api_client.py            # Logic to talk to the FastAPI backend
+│   └── .streamlit/
+│       └── config.toml          # Streamlit theme config (Dark mode, purple/indigo accents)
+│
+├── server/                      # ⚙️ FASTAPI + LANGGRAPH BACKEND
+│   ├── main.py                  # FastAPI entry point (routes & server setup)
+│   ├── graph/                   # --- The LangGraph Logic ---
+│   │   ├── state.py             # Defines the Graph State (TypedDict)
+│   │   ├── nodes.py             # Agent functions (Mapper, Attacker, Verifier)
+│   │   └── edges.py             # Conditional routing logic (Success vs. Fail)
+│   ├── tools/                   # --- Agent Capabilities ---
+│   │   ├── code_executor.py     # Logic to send code to the Docker sandbox
+│   │   ├── repo_reader.py       # Reads files/folders for context
+│   │   └── web_search.py        # Tavily/Search API integration
+│   └── core/                    # --- Prompts & Configs ---
+│       ├── prompts.py           # The system instructions for Gemini 1.5 Pro
+│       └── config.py            # Environment variables loader
+│
+├── sandbox/                     # 🛡️ THE EXECUTION ENVIRONMENT
+│   └── Dockerfile               # Stripped-down Python container for safe testing
+│
+├── .env                         # API Keys (Gemini, Tavily, etc.)
+├── docker-compose.yml           # Runs the client, server, and sandbox together
+├── requirements.txt             # Python dependencies
+└── README.md                    # Resume-ready documentation
