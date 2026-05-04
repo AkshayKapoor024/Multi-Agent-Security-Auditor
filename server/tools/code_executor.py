@@ -6,6 +6,7 @@ import tempfile
 
 # Main tool for running code in the python sandbox isolated container 
 def execute_code_in_sandbox(code:str):
+    """Tool that executes a possible buggy code in a docker sandbox container and returns error or output as per execution"""
     logging.info('Started Building File paths!')
     # Creating temporary file id 
     file_id = str(uuid.uuid4())
