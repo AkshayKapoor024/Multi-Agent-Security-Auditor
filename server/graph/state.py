@@ -9,12 +9,12 @@ class AuditState(TypedDict):
     messages:Annotated[Sequence[BaseMessage],operator.add]
     
     # For audit
-    code_path:str
+    dicovered_files:List[str]
     current_code:str
     mapping_report:str
     
     vulnerabilities_logs:Annotated[List[str],operator.add]
-    verification_logs:str
+    verification_logs:Annotated[List[str],operator.add]
     
     # Routing Logic / control
     next_step:str

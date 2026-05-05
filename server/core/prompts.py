@@ -26,6 +26,12 @@ INPUT TO ROUTE:
 MAPPER_PROMPT = """You are a Senior Security Architect specializing in Static Application Security Testing (SAST).
 Your objective is to analyze the provided codebase and map its topology. Do NOT look for vulnerabilities yet; only map the structure.
 
+"Please analyze the code and provide a clear report containing:
+
+Entry Points (Sources): List the file path and line number where external data enters...
+
+Sensitive Destinations (Sinks): List the file path and line number where data executes..."
+
 Please analyze the code and provide a clear report containing:
 1. Entry Points (Sources): Where does external data enter the system? (e.g., API routes, input(), file reads).
 2. Sensitive Destinations (Sinks): Where does data execute or get stored? (e.g., database queries, subprocess calls, exec(), eval()).
@@ -50,7 +56,7 @@ You must output your findings as a STRICT JSON ARRAY of objects. Do not use mark
 
 Output Schema (JSON Array):
 [
-  {{
+  {{"file_path": "The path extracted from the // FILE: marker",
     "vulnerability_type": "e.g., SQL Injection, Command Injection, XSS",
     "target_line_or_function": "The specific function or line number",
     "severity": "Critical/High/Medium/Low",

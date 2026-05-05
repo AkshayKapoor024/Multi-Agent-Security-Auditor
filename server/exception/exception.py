@@ -2,15 +2,21 @@
 import sys
 from server.logging.logger import logging
 # Creating a resuable function that fetches error details from the sys module and prints a custom error message 
-def error_message_details(error,error_detail:sys):
-    # exc tb will contain all details regarding exception like type , file name , line number etc
-   _,_,exc_tb = error_detail.exc_info()
-#    Getting filename from sys.errordetail
-   file_name = exc_tb.tb_frame.f_code.co_filename
-   
-   error_message = 'Error occured in python script name [{0}] , line number [{1}] , error message[{2}]'.format(file_name,exc_tb.tb_lineno,str(error))
-   
-   return error_message
+def error_message_details(error, error_detail: sys):
+    # If error_detail has exc_info, extract traceback
+    exc_info = error_detail.exc_info()
+    if exc_info[2] is not None:  # means an actual exception occurred
+        _, _, exc_tb = exc_info
+        file_name = exc_tb.tb_frame.f_code.co_filename
+        error_message = (
+            f"Error occurred in python script name [{file_name}], "
+            f"line number [{exc_tb.tb_lineno}], "
+            f"error message [{str(error)}]"
+        )
+        return error_message
+    else:
+        # No actual exception, just return the string
+        return str(error)
 
 # Creating custom error class 
 class CustomException(Exception):
