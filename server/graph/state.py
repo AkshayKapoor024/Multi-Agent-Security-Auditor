@@ -15,7 +15,8 @@ class AuditState(TypedDict):
     
     vulnerabilities_logs:Annotated[List[str],operator.add]
     verification_logs:Annotated[List[str],operator.add]
-    
+    reporter_audit_report:str
+    aligner_audit_report:str
     # Routing Logic / control
     next_step:str
     iter_count:int

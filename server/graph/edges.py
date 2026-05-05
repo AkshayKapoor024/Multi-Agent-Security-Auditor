@@ -11,6 +11,10 @@ def continue_to_verification(state: AuditState):
     # Retrieve the latest list of vulnerabilities from the state
     vulns = state["vulnerabilities_logs"]
     
+    # If no vulnerability generate audit report instead
+    if len(vulns) <=0:
+        return "reporter"
+
     # Send each vulnerability to a separate verifier node instance
     return [
         Send("verifier", {
