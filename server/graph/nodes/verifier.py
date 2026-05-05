@@ -41,8 +41,15 @@ def verifier(state:AuditState , llm ):
         verification_report = execute_code_in_sandbox(cleaned_verifier_response)
         logging.info('Successfully got verification report')
         
+        # 1. Format the dictionary into a readable block for the LLM
+        formatted_report = (
+            f"STDOUT:\n{verification_report.get('stdout', 'None')}\n"
+            f"STDERR:\n{verification_report.get('stderr', 'None')}\n"
+            f"EXIT_CODE: {verification_report.get('exit_code', 'Unknown')}"
+        )
+        
         # Returning verification report
-        return {'verification_logs':[f"RESULT FOR {vulnerability_log[:50]}... :\n{verification_report}"]}
+        return {'verification_logs': [f"--- VERIFICATION LOG FOR: {vulnerability_log[:100]} ---\n{formatted_report}"]}
     except Exception as e:
         logging.info(f'Error while generating verification report : {str(e)}')
         raise CustomException(e,sys)

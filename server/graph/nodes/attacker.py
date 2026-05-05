@@ -34,9 +34,12 @@ def attacker(state:AuditState , llm ):
         # Cleaning/Sanitizing response to get proper JSON format
         clean_json_response = json.loads(re.sub(r",\s*([\]}])", r"\1", attacker_response.strip()))
         
-        logging.info(f"Successfully generated {len(clean_json_response)} vulnerabilities using attacker")    
+        # Convert each dict back to a string so it matches List[str]
+        formatted_logs = [json.dumps(v) for v in clean_json_response]
         
-        return {'vulnerabilities_logs':clean_json_response}
+        logging.info(f"Successfully generated {len(formatted_logs)} vulnerabilities using attacker")    
+        
+        return {'vulnerabilities_logs':formatted_logs}
     except Exception as e:
         logging.error(f'Error while generating vulnerabilty logs using attacker node {str(e)}')
         raise CustomException(e,sys)
