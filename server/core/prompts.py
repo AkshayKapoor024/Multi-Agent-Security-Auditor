@@ -88,6 +88,8 @@ Rules for your Python script:
 4. **Validation Logic:** If the payload successfully executes an unintended action (like a command injection returning 'whoami' output), print "VERIFICATION SUCCESS: [Vulnerability Name]". Otherwise, print "VERIFICATION FAILED".
 5. **No Destruction:** Do not delete files or shut down the system.
 
+NOTE - If logic is too complex to port to Python, mock the function behavior to focus strictly on the input/output flow of the exploit.
+
 OUTPUT ONLY THE PYTHON CODE. No markdown, no explanations. Dont Use ``` backticks python in the start and end of the code just provide only python code nothing more 
 
 VULNERABILITIES TO TEST:
@@ -115,6 +117,8 @@ Your Job:
 - **CRITICAL:** When providing fixes, refer to the ORIGINAL function names and logic found in the "SOURCE CODE" below. Ensure the secure code snippet is written in the SAME language as the source code.
 - Explicitly state whether the sandbox VERIFIED the vulnerability or if the exploit FAILED. (Note: A crash or 'OperationalError' in the logs often confirms a successful injection/vulnerability).
 - Synthesize the technical data into a readable, actionable report. Focus on how the developer should change their specific code.
+
+NOTE- Do not penalize the security score just because the sandbox environment lacks a specific library. Focus on whether the logic path itself remains vulnerable.
 
 CRITICAL LANGUAGE RULES:
 1. Identify the programming language of the "SOURCE CODE" (e.g., JavaScript, Python, C++, etc.).

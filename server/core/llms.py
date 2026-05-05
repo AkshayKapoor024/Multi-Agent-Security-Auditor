@@ -48,3 +48,5 @@ gemini_llms = [get_gemini_llm(m) for m in GEMINI_MODELS]
 # Groq models
 groq_primary = get_groq_llm("llama-3.3-70b-versatile")
 groq_backup = get_groq_llm("mixtral-8x7b-32768")
+
+groq_with_fallback = groq_primary.with_fallbacks(gemini_llms)

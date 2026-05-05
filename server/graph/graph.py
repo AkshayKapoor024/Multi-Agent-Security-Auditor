@@ -13,7 +13,7 @@ from functools import partial
 import os
 from dotenv import load_dotenv
 load_dotenv()
-from server.core.llms import groq_primary
+from server.core.llms import groq_with_fallback
 
 from server.logging.logger import logging
 from server.exception.exception import CustomException
@@ -27,18 +27,18 @@ def graph_builder():
         workflow = StateGraph(AuditState)
 
         # Adding nodes
-        workflow.add_node('router',partial(router,llm=groq_primary))
-        workflow.add_node("mapper", partial(mapper, llm=groq_primary))
-        workflow.add_node("attacker", partial(attacker, llm=groq_primary))
-        workflow.add_node("verifier", partial(verifier, llm=groq_primary))
-        workflow.add_node("reporter", partial(reporter, llm=groq_primary))
-        workflow.add_node("aligner", partial(aligner, llm=groq_primary))
-        workflow.add_node("assistant", partial(assistant, llm=groq_primary))
+        workflow.add_node('router',partial(router,llm=groq_with_fallback))
+        workflow.add_node("mapper", partial(mapper, llm=groq_with_fallback))
+        workflow.add_node("attacker", partial(attacker, llm=groq_with_fallback))
+        workflow.add_node("verifier", partial(verifier, llm=groq_with_fallback))
+        workflow.add_node("reporter", partial(reporter, llm=groq_with_fallback))
+        workflow.add_node("aligner", partial(aligner, llm=groq_with_fallback))
+        workflow.add_node("assistant", partial(assistant, llm=groq_with_fallback))
         
         logging.info('Added nodes successfully')
         # Defining Edges
         
-        workflow.add_conditional_edges(START,'router')
+        workflow.add_edge(START,'router')
         # Adding conditional edge to create audit report or chat 
         workflow.add_conditional_edges('router',route_after_router,{'AUDIT':'mapper','CHAT':'assistant'})
         
