@@ -6,9 +6,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # 3. Install only essential security updates and clean up to keep the image tiny
-RUN apt-get update && apt-get upgrade -y && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Update and install ping utility
+RUN apt-get update && apt-get install -y iputils-ping && rm -rf /var/lib/apt/lists/*
 
 # 4. Create a non-privileged group and user
 # We use --system to ensure this user has no login shell or unnecessary home folder access
