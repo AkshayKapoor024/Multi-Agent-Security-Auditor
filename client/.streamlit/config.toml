@@ -1,0 +1,25 @@
+[theme]
+
+# Primary Accent (muted blue – less aggressive than indigo)
+primaryColor = "#3b82f6"
+showSidebarNavigation = false
+# App background (slightly lifted from pure dark)
+backgroundColor = "#0b1220"
+
+# Cards / sidebar / containers (clear separation)
+secondaryBackgroundColor = "#111827"
+
+# Text (softer than pure white → reduces eye strain)
+textColor = "#e5e7eb"
+
+# Optional (not officially documented but supported in newer builds)
+# base = "dark"
+
+font = "sans serif"
+
+
+[server]
+headless = true
+port = 8501
+enableCORS = false
+enableXsrfProtection = false
