@@ -42,7 +42,7 @@ def mapper(state:AuditState,llm):
             current_code = get_codebase_from_github(url_retriever_response)
             
             # Defining chat prompt template for mapper
-            prompt_template = ChatPromptTemplate.from_messages(MAPPER_PROMPT)
+            prompt_template = ChatPromptTemplate.from_template(MAPPER_PROMPT)
             
             # defining mapper chain
             mapper_chain = prompt_template | llm  | StrOutputParser()

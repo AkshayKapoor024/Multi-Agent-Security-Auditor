@@ -9,31 +9,32 @@ from server.graph.nodes.aligner import aligner
 from server.graph.nodes.assistant import assistant
 from server.graph.edges import continue_to_verification
 from functools import partial
-
+import time
+from langchain_core.messages import HumanMessage
 import os
 from dotenv import load_dotenv
 load_dotenv()
-from server.core.llms import groq_with_fallback
+from server.core.llms import groq_reasoning,elite_accuracy_chain
 
 from server.logging.logger import logging
 from server.exception.exception import CustomException
 import sys
 
 # Main graph builder function
-def graph_builder():
+def graph_builder()->StateGraph:
     try:
         logging.info('Started Building Graph')
         # Defining  workflow
         workflow = StateGraph(AuditState)
 
         # Adding nodes
-        workflow.add_node('router',partial(router,llm=groq_with_fallback))
-        workflow.add_node("mapper", partial(mapper, llm=groq_with_fallback))
-        workflow.add_node("attacker", partial(attacker, llm=groq_with_fallback))
-        workflow.add_node("verifier", partial(verifier, llm=groq_with_fallback))
-        workflow.add_node("reporter", partial(reporter, llm=groq_with_fallback))
-        workflow.add_node("aligner", partial(aligner, llm=groq_with_fallback))
-        workflow.add_node("assistant", partial(assistant, llm=groq_with_fallback))
+        workflow.add_node('router',partial(router,llm=groq_reasoning))
+        workflow.add_node("mapper", partial(mapper, llm=elite_accuracy_chain))
+        workflow.add_node("attacker", partial(attacker, llm=elite_accuracy_chain))
+        workflow.add_node("verifier", partial(verifier, llm=elite_accuracy_chain))
+        workflow.add_node("reporter", partial(reporter, llm=groq_reasoning))
+        workflow.add_node("aligner", partial(aligner, llm=elite_accuracy_chain))
+        workflow.add_node("assistant", partial(assistant, llm=groq_reasoning))
         
         logging.info('Added nodes successfully')
         # Defining Edges
@@ -64,3 +65,14 @@ def graph_builder():
     except Exception as e:
         logging.error(f'Exception occured while building graph: {str(e)}')    
         raise CustomException(e,sys)
+    
+if __name__=='__main__':
+    repo_url = 'https://github.com/AkshayKapoor024/InternshipProjects'
+    # getting graph
+    graph = graph_builder()
+    
+    user_query = HumanMessage(content=f'Hello , I want to audit my github URL can you please visit https://github.com/AkshayKapoor024/ML-Project and check for possible vulnerabilities')
+    response = graph.invoke({'messages':[user_query]})
+    
+    
+    print(f'_________FINAL AUDIT_____________\n {response.get("aligner_audit_report")}')

@@ -38,6 +38,9 @@ Please analyze the code and provide a clear report containing:
 3. Data Flow: How does data travel from the sources to the sinks? Are there any sanitization or validation steps in between?
 4. Tech Stack Context: What libraries are imported that could pose risks?
 
+NOTE- If line numbers are not visible in the provided code, identify the function names instead.
+Do not report generic vulnerabilities (like SQLi) unless the code actually imports a database driver or uses SQL syntax. If a code doesnt have vulnerabilities Simply state no vulnerabilities dont add vulnerabilties on your own . 
+
 Keep your report factual, highly structured, and concise.
 
 CODE TO MAP:
@@ -53,6 +56,8 @@ ATTACKER_PROMPT = """You are an Elite Penetration Tester (Red Team).
 You are reviewing a code map created by the Security Architect. Your job is to identify ALL potential vulnerabilities based on the sources and sinks identified.
 
 You must output your findings as a STRICT JSON ARRAY of objects. Do not use markdown wrappers like ```json. Do not include any text before or after the array.
+
+Do not report generic vulnerabilities (like SQLi) unless the code actually imports a database driver or uses SQL syntax. If a code doesnt have vulnerabilities Simply state no vulnerabilities dont add vulnerabilties on your own . 
 
 Output Schema (JSON Array):
 [
@@ -163,7 +168,13 @@ A high-level summary of the risk posture and critical findings.
 ### 📝 Final Developer Notes
 Correct any minor syntax errors in the original code (e.g., print vs console.log) and suggest better coding patterns.
 
+IMPORTANT NOTE-
+If the code does not import a database library (e.g., sqlite3, psycopg2), you MUST NOT report SQL Injection vulnerabilities. If the code does not use os.system or subprocess, you MUST NOT report Command Injection.
+
+
 NOTE - If the verification logs contain system errors (like ModuleNotFound) but the logic still proves the vulnerability, summarize the finding as 'Confirmed via Logic Path' and explain the system noise briefly.
+
+
 
 Original Source Code:
 {current_code}

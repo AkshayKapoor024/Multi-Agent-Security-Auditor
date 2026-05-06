@@ -14,8 +14,8 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 # GOOGLE MODELS (FALLBACK CHAIN)
 # =========================
 GEMINI_MODELS = [
-    "gemini-flash-latest",
     "gemini-2.5-flash",
+    "gemini-flash-latest",
     "gemini-2.0-flash",
     "gemini-flash-lite-latest",
     "gemini-pro-latest"
@@ -49,4 +49,11 @@ gemini_llms = [get_gemini_llm(m) for m in GEMINI_MODELS]
 groq_primary = get_groq_llm("llama-3.3-70b-versatile")
 groq_backup = get_groq_llm("mixtral-8x7b-32768")
 
-groq_with_fallback = groq_primary.with_fallbacks(gemini_llms)
+# For elite accuracy tasks
+elite_accuracy_chain = gemini_llms[0].with_fallbacks(
+    gemini_llms[1:] + [groq_primary,groq_backup]
+)
+
+# For reasoning Tasks
+groq_reasoning = groq_primary.with_fallbacks(
+   [groq_backup] + gemini_llms )
