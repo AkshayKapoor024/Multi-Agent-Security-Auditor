@@ -1,15 +1,14 @@
 import streamlit as st
-from api_client import fetch_audit_response
-
+from api_client import checkauth_user , fetch_ai_response
 # 1. Page Configuration (Overrides/Adds to TOML)
 st.set_page_config(
     page_title="Multi-Agent Security Auditor",
     page_icon="🛡️",
     layout="wide"
 )
-
-bt = st.button('Click to navigate to login-page')
-if bt:
+# Checking if user not logged in then swtich to login page
+if "user" not in st.session_state:
+    st.toast("Please Login before accessing Vantaguard",icon='☠️')
     st.switch_page('pages/login.py')
 
 # 2. Sidebar - Status & Project Info
@@ -21,7 +20,7 @@ with st.sidebar:
         st.rerun()
 
 # 3. Main Header
-st.title("Automated Security Auditor")
+st.title("Vantaguard - Architectural Intelligence. Autonomous Assurance.")
 st.markdown("---")
 
 # 4. Initialize Chat History
@@ -42,10 +41,18 @@ if prompt := st.chat_input("Enter GitHub URL or security query..."):
 
     # Assistant message (Calling FastAPI)
     with st.chat_message("assistant"):
-        with st.spinner("🤖 Agents are auditing the codebase..."):
-            result = fetch_audit_response(prompt)
-            st.balloons('Success')
-            if result:
-                response_text = result.get("app_response", "No response received.")
-                st.markdown(response_text)
-                st.session_state.messages.append({"role": "assistant", "content": response_text})
+        with st.spinner("🤖 Agents are auditing the codebase...",show_time=True):
+            response = fetch_ai_response(prompt)
+            # Retrieving response
+            body = response.json()
+            # Getting client response
+            if response.status_code==200:
+                result = body.get('message','No response received')
+                st.balloons()            
+                if result:
+                    st.markdown(result)
+                    st.session_state.messages.append({"role": "assistant", "content": result})
+            else:
+                result = body.get('error')
+                st.error('Error while generating client response')
+                st.toast(body.get('error'),icon='☠️',duration='long')

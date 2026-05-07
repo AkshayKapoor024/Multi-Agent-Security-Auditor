@@ -1,7 +1,7 @@
 from langchain_community.document_loaders import GitLoader
 import os
 from server.exception.exception import CustomException
-from server.logging.logger import logging
+from server.logger.logger import logging
 
 import os
 import shutil

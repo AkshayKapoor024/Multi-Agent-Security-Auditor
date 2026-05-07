@@ -1,5 +1,5 @@
 from passlib.context import CryptContext
-
+import bcrypt
 # Initializing pass encryption object
 pwd_context = CryptContext(schemes=['bcrypt'],deprecated='auto')
 

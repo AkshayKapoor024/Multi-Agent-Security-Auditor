@@ -1,6 +1,6 @@
 # Sys module helps us make changes in the python runtime enviroment and helps us get all the error details occured in the project
 import sys
-from server.logging.logger import logging
+from server.logger.logger import logging
 # Creating a resuable function that fetches error details from the sys module and prints a custom error message 
 def error_message_details(error, error_detail: sys):
     # If error_detail has exc_info, extract traceback

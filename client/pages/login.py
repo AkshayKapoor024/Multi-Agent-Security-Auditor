@@ -1,6 +1,7 @@
 import streamlit as st
 from pages.style import css
 st.set_page_config(page_title='Vantaguard - Architectural Intelligence , Autonomous Assurance.' , page_icon='🔐')
+from api_client import login_user
 
 st.markdown(css, unsafe_allow_html=True)
 
@@ -36,9 +37,24 @@ if submit:
     elif len(password) < 6:
         st.error("⚠️ Password must be at least 6 characters.")
     else:
-        st.success("✅ Login successful!")
-        st.session_state["user"] = email
-        st.switch_page('pages/homepage.py') 
+        with st.spinner(text='Logging in user ',show_time=True):  
+            # Create user dict
+            user_dict = dict(password=password,email=email)
+            # Getting response from signup
+            response = login_user(user=user_dict)
+            
+            # Fetching response body
+            body = response.json()
+            
+            # Successful signup and auto login
+            if response.status_code==200:
+                st.toast(body.get('message'), icon='✅',duration='long')
+                st.balloons()
+                # Getting user from response and storing in session object
+                st.session_state.user = body.get('user')
+                st.switch_page('pages/homepage.py') 
+            else: 
+                st.toast(f"Error while signing up user: {body.get('error')}", icon='☠️',duration='long') 
 
 
 # Setting navigation to signup page

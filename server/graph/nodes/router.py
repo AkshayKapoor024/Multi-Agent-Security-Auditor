@@ -1,6 +1,6 @@
 from server.graph.state import AuditState
 from typing import Literal
-from server.logging.logger import logging
+from server.logger.logger import logging
 from server.exception.exception import CustomException
 from langchain_core.prompts import ChatPromptTemplate
 from server.core.prompts import ROUTER_PROMPT

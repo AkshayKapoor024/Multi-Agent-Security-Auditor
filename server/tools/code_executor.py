@@ -1,7 +1,7 @@
 import uuid 
 import subprocess
 import os 
-from server.logging.logger import logging
+from server.logger.logger import logging
 import tempfile
 
 # Main tool for running code in the python sandbox isolated container 

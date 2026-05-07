@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 from server.core.llms import groq_reasoning,elite_accuracy_chain
 
-from server.logging.logger import logging
+from server.logger.logger import logging
 from server.exception.exception import CustomException
 import sys
 

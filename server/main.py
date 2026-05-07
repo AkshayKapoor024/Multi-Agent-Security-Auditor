@@ -7,7 +7,7 @@ import json
 
 from pydantic import BaseModel
 
-from server.logging.logger import logging
+from server.logger.logger import logging
 from server.graph.graph import graph_builder
 from langchain_core.messages import HumanMessage
 
