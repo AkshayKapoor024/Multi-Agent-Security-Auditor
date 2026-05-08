@@ -22,7 +22,7 @@ def assistant(state:AuditState ,llm ):
         current_code = state.get('current_code', 'No codebase loaded yet.')
         
         # Retrieving current query
-        user_query = state['messages'][-1]
+        user_query = state['messages'][-1].content
         
         # Defining assistant prompt template
         assistant_prompt = ChatPromptTemplate.from_template(ASSISTANT_PROMPT)

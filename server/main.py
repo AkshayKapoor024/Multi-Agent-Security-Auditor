@@ -5,7 +5,8 @@ import certifi
 certifi.where()
 import json
 
-from pydantic import BaseModel
+from pydantic import BaseModel 
+from typing import Optional
 
 from server.logger.logger import logging
 from server.graph.graph import graph_builder
@@ -16,6 +17,8 @@ from server.schemas.login_user import LoginUser
 
 import shutil
 import uuid
+
+from datetime import datetime ,UTC
 
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -86,7 +89,8 @@ async def signup(request:Request,user:User):
             'name':user.name,
             'username':user.username,
             'email':user.email,
-            'password':hashed_password
+            'password':hashed_password,
+            'chat_histories': []
         })
         
         # AutoLogin the user after signup
@@ -194,20 +198,77 @@ async def get_me(request: Request):
 # Defining Schema for the incoming request
 class AI(BaseModel):
     query:str
+    conversational_id:Optional[str]=None
     
 # Main Conversational Route
 @app.post('/agent',tags=['Generate_Audit_Report'])
 async def agent_call(request:Request,request_data:AI):
     try:
+        
+        
         # Getting query from the user 
         query = request_data.query
         
         # Getting logged user ID 
         user_id = request.session.get("user")
         
-        thread_id = f"{user_id}:{str(uuid.uuid4())[:8]}"
+        # Checking if user exist or not
+        if not user_id:
+            return JSONResponse(
+        content={'error':'Unauthorized'},
+        status_code=401
+        )
+        
+        # if no conversational ID from the frontend create new conversation
+        if not request_data.conversational_id:
+        
+            
+            # Creating new chat history document
+            chat_doc = {
+                'user_id':user_id,
+                'title':query[:20],
+                'messages':[],
+                'current_code':'',
+                'aligner_audit_report':'',
+                'created_at': datetime.now(UTC),
+                'updated_at': datetime.now(UTC),
+            }
+            
+            # Storing inside the colection
+            inserted_chat = chat_history.insert_one(chat_doc)
+            
+            # Retreiving stored document id
+            chat_id = inserted_chat.inserted_id
+            
+            # Storing new conversation's id inside the user schema
+            users.update_one(
+                {'_id':ObjectId(user_id)},
+                {
+                    '$push':{
+                        'chat_histories':str(chat_id)
+                    }
+                }
+            )
+        else :
+            # Taking user conversational history id
+            chat_id= request_data.conversational_id       
+
+            # Checking if chat exist or not for the user
+            existing_chat = chat_history.find_one({
+            '_id': ObjectId(chat_id),
+            'user_id': user_id
+            })
+
+            if not existing_chat:
+                return JSONResponse(
+                    content={'error': 'Conversation not found'},
+                    status_code=404
+                    )
+            
+        # using Conversational ID as thread iD
+        thread_id = str(chat_id)
         # Use a constant ID for now, or get it from the request for multi-user support
-        config = {"configurable": {"thread_id": user_id}}
+        config = {"configurable": {"thread_id": thread_id}}
         
         # Encapsulating Client query inside human message
         query_message = HumanMessage(content=query)
@@ -215,20 +276,60 @@ async def agent_call(request:Request,request_data:AI):
         # Invoking graph to get response
         response = graph.invoke({'messages':[query_message]},config=config)
 
+        # Retreving AI response based on the path
+        if response.get('next_step') == 'AUDIT':
+            ai_response = response.get('aligner_audit_report')
+
+        elif response.get('next_step') == 'CHAT':
+            ai_response = response.get('messages')[-1].content
+
+        else:
+            ai_response = "Error generating response"
+        
+        # Storing response inchat history
+        chat_history.update_one(
+            {'_id':ObjectId(chat_id),
+            'user_id':user_id   
+            },
+            {
+                '$push':{
+                    'messages':{
+                        '$each':[
+                            {
+                                'role':'human',
+                                'content':query,
+                                'created_at': datetime.now(UTC)
+                            },
+                            {
+                                'role':'assistant',
+                                'content':ai_response,
+                                'created_at': datetime.now(UTC)
+                            }
+                        ]
+                    }
+                },
+                '$set':{
+                    'current_code':response.get('current_code',''),
+                    'aligner_audit_report':response.get('aligner_audit_report',''),
+                    'updated_at':datetime.now(UTC)
+                }
+            }
+        )
+
         # Getting AI Response based on type of chat
         if response.get('next_step')=='AUDIT':
             return JSONResponse(
-                content={'message':response.get('aligner_audit_report')},
+                content={'message':response.get('aligner_audit_report'),'conversational_id':str(chat_id)},
                 status_code=200
             )
         elif response.get('next_step')=='CHAT':
             return JSONResponse(
-                content = {'message':response.get('messages')[-1].content},
+                content = {'message':response.get('messages')[-1].content,'conversational_id':str(chat_id)},
                 status_code=200,
             )
         else:
             return JSONResponse(
-                content={'error':'Error while generating AI response . Please try again'},
+                content={'error':'Error while generating AI response . Please try again','conversational_id':str(chat_id)},
                 status_code=400
             )
     # Using except to return internal server error
