@@ -10,20 +10,30 @@ from langchain_core.output_parsers import StrOutputParser
 def router(state:AuditState , llm):
     """Router node to route the user query to either AUDIT or CHAT"""
     try:
-        logging.info('Initiated Routing Query')
-        # Taking last user Human Message from message history
+        logging.info('Entered router and initiated the routing request')
         user_query = state['messages'][-1].content
-        # Building router prompt
-        router_prompt = ChatPromptTemplate.from_template(ROUTER_PROMPT)        
-        # Bulding Router chain
+
+        previous_audit = state.get("aligner_audit_report", "")
+        current_code = state.get("current_code", "")
+
+        has_existing_audit = bool(previous_audit.strip())
+        has_codebase = bool(current_code.strip())
+
+        router_prompt = ChatPromptTemplate.from_template(ROUTER_PROMPT)
+
         router_chain = router_prompt | llm | StrOutputParser()
-        # Feeding user query into input of llm
-        raw_response = router_chain.invoke({'input':user_query})
+
+        raw_response = router_chain.invoke({
+            'input': user_query,
+            'has_existing_audit': has_existing_audit,
+            'has_codebase': has_codebase,
+            'previous_audit': previous_audit[:3000]
+        })
+
         router_response = raw_response.strip().upper()
         
-        logging.info('Router Responded Successfully!')
-        # Returning router response as per AUDIT OR CHAT
-        return {'next_step':router_response}
+        logging.info('successfully routed to the next step')
+        return {'next_step': router_response}
     except Exception as e:
         logging.error(f'Error while routing the query: {str(e)}')
         raise CustomException(e,sys)

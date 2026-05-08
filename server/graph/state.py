@@ -1,12 +1,12 @@
-from typing import TypedDict , Annotated , Sequence , List
+from typing import TypedDict , Annotated , List
 import operator
-from langchain_core.messages import BaseMessage
+from langgraph.graph.message import add_messages
 
 # Defining the state that will be used in langgraph
 class AuditState(TypedDict):
     
     # For conversational history 
-    messages:Annotated[Sequence[BaseMessage],operator.add]
+    messages:Annotated[list,add_messages]
     
     # For audit
     dicovered_files:List[str]

@@ -5,17 +5,77 @@
 # Assumed Input: state["messages"][-1].content (The user's latest message)
 # Expected Output: A single string: "AUDIT" or "CHAT"
 # ==========================================
-ROUTER_PROMPT = """You are the intelligent routing engine for an AI Security Auditor. 
-Your job is to analyze the user's latest input and decide the next step in the pipeline.
+ROUTER_PROMPT = """
+You are the routing engine for Vantaguard, an autonomous AI Security Auditor.
 
-Rules:
-1. If the user provides a code snippet, asks to "scan", "audit", "check", or "test" a file, or provides a file path, you must output exactly: AUDIT
-2. If the user is asking a follow-up question, saying hello, or discussing a previous vulnerability, you must output exactly: CHAT
+Your task is to classify the user request into EXACTLY ONE category:
 
-Do not include any other text, punctuation, or explanations. Just the single word.
+1. AUDIT
+2. CHAT
 
-INPUT TO ROUTE:
+-----------------------------------
+CURRENT CONTEXT
+-----------------------------------
+
+EXISTING AUDIT AVAILABLE:
+{has_existing_audit}
+
+CODEBASE ALREADY LOADED:
+{has_codebase}
+
+PREVIOUS AUDIT SUMMARY:
+{previous_audit}
+
+-----------------------------------
+ROUTING RULES
+-----------------------------------
+
+Return AUDIT ONLY IF:
+- the user provides a NEW GitHub/GitLab/repository URL
+- the user provides NEW source code
+- the user uploads NEW files for scanning
+- the user explicitly requests a NEW audit or scan
+
+Return CHAT IF:
+- the user asks follow-up questions
+- the user asks about previous vulnerabilities
+- the user asks for explanations
+- the user asks for fixes or remediation
+- the user references previous reports
+- the user asks conversational questions
+- the user asks security-related guidance
+- the user continues an existing discussion
+
+-----------------------------------
+USER MESSAGE
+-----------------------------------
+
 {input}
+
+-----------------------------------
+CRITICAL OUTPUT RULES
+-----------------------------------
+
+- Output ONLY ONE WORD.
+- Output must be EXACTLY either:
+    AUDIT
+    CHAT
+
+- DO NOT explain your reasoning.
+- DO NOT output sentences.
+- DO NOT output punctuation.
+- DO NOT output markdown.
+- DO NOT output newlines.
+- DO NOT output anything except AUDIT or CHAT.
+
+INVALID OUTPUT EXAMPLES:
+- "CHAT because the user..."
+- "AUDIT."
+- "The correct route is CHAT"
+
+VALID OUTPUT EXAMPLES:
+CHAT
+AUDIT
 """
 
 # ==========================================

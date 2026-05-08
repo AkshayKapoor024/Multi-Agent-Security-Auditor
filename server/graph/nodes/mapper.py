@@ -8,6 +8,7 @@ import sys
 from langchain_core.output_parsers import StrOutputParser
 from server.tools.github_repo_loader import get_codebase_from_github
 
+from langchain_core.messages import AIMessage
 # Main mapper node
 def mapper(state:AuditState,llm):
     """analyze the current_code and identify the specific "Sinks" (vulnerable functions) and "Sources" to guide the Attacker."""
@@ -53,7 +54,17 @@ def mapper(state:AuditState,llm):
             return {'mapping_report':mapper_response , 'current_code':current_code}
         # Else return error and donot change or return state   
         else:
-            raise CustomException('No github URL found in input .',sys)
+            return {
+        "next_step": "CHAT", 
+        "messages": [AIMessage(content="I'm ready to help! Please provide a valid GitHub URL or a code snippet to begin the audit.")]
+        }
     except Exception as e:
         logging.error(f'Exception occured while mapping codebase : {str(e)}')
         raise CustomException(e,sys)
+
+# If routed AUDIT but there is no link
+def check_mapper_success(state: AuditState):
+    # Check if code was successfully retrieved
+    if state.get('current_code'):
+        return "SUCCESS"
+    return "INVALID_INPUT"

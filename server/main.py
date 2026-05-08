@@ -14,6 +14,8 @@ from langchain_core.messages import HumanMessage
 from server.schemas.user import User
 from server.schemas.login_user import LoginUser
 
+import shutil
+import uuid
 
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -60,6 +62,9 @@ except Exception as e:
     logging.error(f"Failed to build graph: {str(e)}")
     raise e
 
+# Cleaning the temporary folder if exists due to github repo clones
+if os.path.exists("./temp"):
+    shutil.rmtree("./temp", ignore_errors=True)
 
 @app.get('/',tags=['authentication'])
 async def index():
@@ -192,16 +197,23 @@ class AI(BaseModel):
     
 # Main Conversational Route
 @app.post('/agent',tags=['Generate_Audit_Report'])
-async def agent_call(request_data:AI):
+async def agent_call(request:Request,request_data:AI):
     try:
         # Getting query from the user 
         query = request_data.query
+        
+        # Getting logged user ID 
+        user_id = request.session.get("user")
+        
+        thread_id = f"{user_id}:{str(uuid.uuid4())[:8]}"
+        # Use a constant ID for now, or get it from the request for multi-user support
+        config = {"configurable": {"thread_id": user_id}}
         
         # Encapsulating Client query inside human message
         query_message = HumanMessage(content=query)
         
         # Invoking graph to get response
-        response = graph.invoke({'messages':[query_message]})
+        response = graph.invoke({'messages':[query_message]},config=config)
 
         # Getting AI Response based on type of chat
         if response.get('next_step')=='AUDIT':

@@ -34,7 +34,7 @@ def assistant(state:AuditState ,llm ):
         assistant_response = assistant_chain.invoke({'current_code':current_code,'chat_history':message_history,'latest_audit_report':latest_report,'input':user_query})
         logging.info('Assistant responded successfully.')
         
-        return {'messages':[assistant_response]}
+        return {'messages':[assistant_response],'aligner_audit_report':latest_report,'current_code':current_code}
     except Exception as e:
         logging.info(f'Error while generating Assistant response {str(e)}')
         raise CustomException(e,sys)

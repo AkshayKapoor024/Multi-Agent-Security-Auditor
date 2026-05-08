@@ -27,8 +27,8 @@ def aligner(state:AuditState ,llm ):
         # Retrieving aligner audit report
         aligner_response = aligner_chain.invoke({'current_code':current_code,'intermediate_report':reporter_audit_report})
         logging.info('Successfully generated main audit report')
-        
-        return {'aligner_audit_report':aligner_response}
+        logging.info(state)
+        return {'aligner_audit_report':aligner_response }
     except Exception as e:
         logging.info(f'Error while generating main report {str(e)}')
         raise CustomException(e,sys)

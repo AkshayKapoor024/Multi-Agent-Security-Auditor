@@ -1,7 +1,7 @@
 from langgraph.graph import START,END,StateGraph
 from server.graph.state import AuditState
 from server.graph.nodes.router import router , route_after_router
-from server.graph.nodes.mapper import mapper
+from server.graph.nodes.mapper import mapper , check_mapper_success
 from server.graph.nodes.attacker import attacker
 from server.graph.nodes.verifier import verifier
 from server.graph.nodes.reporter import reporter
@@ -19,6 +19,12 @@ from server.core.llms import groq_reasoning,elite_accuracy_chain
 from server.logger.logger import logging
 from server.exception.exception import CustomException
 import sys
+
+# Taking memory saver checkpointer
+from langgraph.checkpoint.memory import MemorySaver
+
+# Initializing memory
+memory=MemorySaver()
 
 # Main graph builder function
 def graph_builder()->StateGraph:
@@ -43,7 +49,17 @@ def graph_builder()->StateGraph:
         # Adding conditional edge to create audit report or chat 
         workflow.add_conditional_edges('router',route_after_router,{'AUDIT':'mapper','CHAT':'assistant'})
         
-        workflow.add_edge('mapper','attacker')
+        # OLD: workflow.add_edge('mapper','attacker')
+
+        # NEW:
+        workflow.add_conditional_edges(
+            "mapper",
+            check_mapper_success,
+            {
+                "SUCCESS": "attacker",
+                "INVALID_INPUT": "assistant"  # Direct bypass to the Chat Assistant
+            }
+        )       
         
         workflow.add_conditional_edges('attacker',continue_to_verification,['verifier','reporter'])
         
@@ -58,7 +74,7 @@ def graph_builder()->StateGraph:
         
         logging.info('Added edges successfully')
         # Compiling graph
-        graph = workflow.compile()
+        graph = workflow.compile(checkpointer=memory)
         
         logging.info('Graph compiled and returned successfully')
         return graph
