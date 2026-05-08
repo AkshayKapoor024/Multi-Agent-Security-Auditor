@@ -156,7 +156,68 @@ async def logout(request:Request):
     except Exception as e:
         return JSONResponse(content={'error':str(e)},status_code=500)
 
+ 
+@app.post('/getFullHistory')
+async def get_user_chat_history(request:Request):
+    try:
+        userid = request.session.get('user')
+        if not userid:
+            return JSONResponse(content={'error':'No user id provided'},status_code=400)
+        elif not users.find_one({'_id':ObjectId(userid)}):
+            return JSONResponse(content={'error':'No user exists with the provided user id'},status_code=400)
+        else:
+            user = users.find_one({'_id':ObjectId(userid)})
+            
+            # Retrieving chat histories'
+            chat_ids = user['chat_histories']
+            
+            all_chats = chat_history.find({
+            '_id': {
+            '$in': [ObjectId(chat_id) for chat_id in chat_ids]
+            }
+            })
 
+            required_chat_history = [
+                {
+                'chat_id': str(chat['_id']),
+                'title': chat['title']
+            }
+            for chat in all_chats
+            ]
+            return JSONResponse(content={'chat_histories':required_chat_history},status_code=200)
+            
+    except Exception as e:
+        return JSONResponse(content={'error':str(e)},status_code=500)
+    
+    
+class ChatId(BaseModel):
+    chatid:str
+@app.post('/getHistory')
+async def get_chat_history(userid:ChatId,request:Request):
+    try:
+        user_id = request.session.get('user')
+        if not user_id or not userid.chatid:
+            return JSONResponse(content={'error':'No user id or chatid provided'},status_code=400)
+        elif not users.find_one({'_id':ObjectId(user_id)}):
+            return JSONResponse(content={'error':'No user exists with the provided user id'},status_code=400)
+        else:
+            
+            chat_history_retrieved = chat_history.find_one({'_id':ObjectId(userid.chatid),'user_id':user_id})
+            
+            if not chat_history_retrieved:
+                return JSONResponse(
+                content={'error':'Chat history not found'},
+                status_code=404
+            )
+            
+            chat_history_retrieved['_id'] = str(chat_history_retrieved['_id'])
+            chat_history_retrieved['created_at'] = str(chat_history_retrieved['created_at'])
+            chat_history_retrieved['updated_at'] = str(chat_history_retrieved['updated_at'])
+            
+            return JSONResponse(content={'chat_history':chat_history_retrieved},status_code=200)
+            
+    except Exception as e:
+        return JSONResponse(content={'error':str(e)},status_code=500)
 
 
 @app.get("/isAuthenticated", tags=["Authentication"])
