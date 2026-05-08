@@ -10,7 +10,7 @@ from typing import Optional
 
 from server.logger.logger import logging
 from server.graph.graph import graph_builder
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage
 
 from server.schemas.user import User
 from server.schemas.login_user import LoginUser
@@ -314,28 +314,49 @@ async def agent_call(request:Request,request_data:AI):
             # Taking user conversational history id
             chat_id= request_data.conversational_id       
 
-            # Checking if chat exist or not for the user
-            existing_chat = chat_history.find_one({
-            '_id': ObjectId(chat_id),
-            'user_id': user_id
-            })
+        # Checking if chat exist or not for the user
+        existing_chat = chat_history.find_one({
+        '_id': ObjectId(chat_id),
+        'user_id': user_id
+        })
 
-            if not existing_chat:
-                return JSONResponse(
-                    content={'error': 'Conversation not found'},
-                    status_code=404
-                    )
+        if not existing_chat:
+            return JSONResponse(
+                content={'error': 'Conversation not found'},
+                status_code=404
+            )
             
+            
+        # Creating initial graph state from existing chat being loaded
+        graph_state = {
+            "messages": [],
+            "current_code": existing_chat.get("current_code", ""),
+            "aligner_audit_report": existing_chat.get("aligner_audit_report", "")
+        }
+        
+        # Updating messages section using chathistory
+        for msg in existing_chat.get("messages", []):
+    
+            if msg["role"] == "human":
+                graph_state["messages"].append(
+                HumanMessage(content=msg["content"])
+            )
+
+            elif msg["role"] == "assistant":
+                graph_state["messages"].append(
+                AIMessage(content=msg["content"])
+            )
+        
         # using Conversational ID as thread iD
         thread_id = str(chat_id)
         # Use a constant ID for now, or get it from the request for multi-user support
         config = {"configurable": {"thread_id": thread_id}}
         
         # Encapsulating Client query inside human message
-        query_message = HumanMessage(content=query)
+        graph_state['messages'].append(HumanMessage(content=query))
         
         # Invoking graph to get response
-        response = graph.invoke({'messages':[query_message]},config=config)
+        response = graph.invoke(graph_state, config=config)
 
         # Retreving AI response based on the path
         if response.get('next_step') == 'AUDIT':
@@ -399,6 +420,7 @@ async def agent_call(request:Request,request_data:AI):
             content={'error':str(e)},
             status_code=500
         )
+
 
 if __name__=='__main__':
     app_run(app,host='0.0.0.0',port=8080)
