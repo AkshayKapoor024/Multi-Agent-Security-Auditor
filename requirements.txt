@@ -1,19 +1,38 @@
+# =========================================
+# Vantaguard - Requirements
+# =========================================
+
 # Core Agentic Framework
 langchain>=0.3.0
 langgraph>=0.2.0
-langchain-google-genai>=2.0.0  # For Gemini 1.5 Pro/Flash
+langchain-google-genai>=2.0.0
+langchain-groq>=1.1.2
+langchain-community>=0.4.1
 
-# Web Server & UI
+# Backend & API
 fastapi[standard]>=0.136.0
-streamlit>=1.40.0
-python-dotenv>=1.0.0
-
-# Tools & Utilities
-tavily-python>=0.7.0         # For the Attacker's web search
 pydantic>=2.0.0
 httpx>=0.27.0
 
-ipykernel
-pymongo
-passlib[bcrypt]
-pyyaml
+# Frontend
+streamlit>=1.40.0
+
+# Database & Authentication
+pymongo>=4.17.0
+passlib[bcrypt]>=1.7.4
+bcrypt==4.0.1
+
+# Environment & Configuration
+python-dotenv>=1.0.0
+pyyaml>=6.0.3
+certifi>=2026.4.22
+
+# AI / Search Utilities
+tavily-python>=0.7.0
+
+# Time & Utility Packages
+pytz>=2026.2
+jsonpointer>=3.1.1
+
+# Development / Notebook
+ipykernel>=7.2.0
