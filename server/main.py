@@ -51,7 +51,7 @@ app.add_middleware(
 # Adding cors middlewares
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8501"],
+    allow_origins=["http://localhost:8501","http://35.154.61.226:8501"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

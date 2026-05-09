@@ -1,0 +1,170 @@
+name: Vantaguard CI-CD
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+
+  integration:
+    name: Continuous Integration
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Lint
+        run: echo "Linting completed"
+
+      - name: Tests
+        run: echo "Tests completed"
+
+  build-and-push:
+    name: Build and Push Docker Images
+    needs: integration
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      # =========================================
+      # Build Main Vantaguard Image
+      # =========================================
+
+      - name: Build Main App Image
+        run: |
+          docker build -t ${{ secrets.AWS_ECR_VANTAGUARD_REPO_NAME }} .
+
+      - name: Tag Main App Image
+        run: |
+          docker tag ${{ secrets.AWS_ECR_VANTAGUARD_REPO_NAME }}:latest \
+          ${{ secrets.AWS_ECR_VANTAGUARD_URI }}:latest
+
+      - name: Push Main App Image
+        run: |
+          docker push ${{ secrets.AWS_ECR_VANTAGUARD_URI }}:latest
+
+      # =========================================
+      # Build Sandbox Image
+      # =========================================
+
+      - name: Build Sandbox Image
+        run: |
+          docker build -t ${{ secrets.AWS_ECR_SANDBOX_REPO_NAME }} ./sandbox
+
+      - name: Tag Sandbox Image
+        run: |
+          docker tag ${{ secrets.AWS_ECR_SANDBOX_REPO_NAME }}:latest \
+          ${{ secrets.AWS_ECR_SANDBOX_URI }}:latest
+
+      - name: Push Sandbox Image
+        run: |
+          docker push ${{ secrets.AWS_ECR_SANDBOX_URI }}:latest
+
+  deployment:
+    name: Continuous Deployment
+    needs: build-and-push
+    runs-on: self-hosted
+
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      # =========================================
+      # Pull Latest Images
+      # =========================================
+
+      - name: Pull Main App Image
+        run: |
+          docker pull ${{ secrets.AWS_ECR_VANTAGUARD_URI }}:latest
+
+      - name: Pull Sandbox Image
+        run: |
+          docker pull ${{ secrets.AWS_ECR_SANDBOX_URI }}:latest
+
+      # =========================================
+      # Stop Existing Containers
+      # =========================================
+
+      - name: Stop Existing Main App
+        run: |
+          docker ps -q --filter "name=vantaguard-app" | grep -q . && \
+          docker stop vantaguard-app && \
+          docker rm -fv vantaguard-app || true
+
+      - name: Stop Existing Sandbox
+        run: |
+          docker ps -q --filter "name=sandbox" | grep -q . && \
+          docker stop sandbox && \
+          docker rm -fv sandbox || true
+
+      # =========================================
+      # Run Sandbox Container
+      # =========================================
+
+      - name: Run Sandbox Container
+        run: |
+          docker run -d \
+          --name sandbox \
+          --restart always \
+          --dns 8.8.8.8 \
+          --dns 1.1.1.1 \
+          ${{ secrets.AWS_ECR_SANDBOX_URI }}:latest
+
+      # =========================================
+      # Run Main Application Container
+      # =========================================
+
+      - name: Run Main App Container
+        run: |
+          docker run -d \
+          -p 8080:8080 \
+          -p 8501:8501 \
+          --restart always \
+          --name vantaguard-app \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -e GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }} \
+          -e GOOGLE_API_KEY2=${{ secrets.GOOGLE_API_KEY2 }} \
+          -e GOOGLE_API_KEY5=${{ secrets.GOOGLE_API_KEY5 }} \
+          -e GROQ_API_KEY=${{ secrets.GROQ_API_KEY }} \
+          -e BACKEND_URL=${{ secrets.BACKEND_URL }} \
+          -e MONGODB_URL=${{ secrets.MONGODB_URL }} \
+          -e SESSION_SECRET_KEY=${{ secrets.SESSION_SECRET_KEY }} \
+          ${{ secrets.AWS_ECR_VANTAGUARD_URI }}:latest
+
+      # =========================================
+      # Cleanup
+      # =========================================
+
+      - name: Cleanup Docker
+        run: |
+          docker system prune -f

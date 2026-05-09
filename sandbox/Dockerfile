@@ -1,28 +1,67 @@
-# 1. Use a minimal, secure base image
+# =========================
+# VANTAGUARD SANDBOX IMAGE
+# =========================
+
 FROM python:3.11-slim-bookworm
 
-# 2. Prevent Python from writing .pyc files and buffering stdout/stderr
+# Prevent pyc generation and enable immediate logs
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# 3. Install only essential security updates and clean up to keep the image tiny
-# Update and install ping utility
-RUN apt-get update && apt-get install -y iputils-ping && rm -rf /var/lib/apt/lists/*
+# Create persistent user pip path
+ENV PATH="/home/sandboxuser/.local/bin:$PATH"
 
-# 4. Create a non-privileged group and user
-# We use --system to ensure this user has no login shell or unnecessary home folder access
+# Install basic utilities
+RUN apt-get update && apt-get install -y \
+    iputils-ping \
+    curl \
+    gcc \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root sandbox user
 RUN groupadd --system sandboxgroup && \
-    useradd --system --gid sandboxgroup --create-home --home-dir /home/sandboxuser sandboxuser
+    useradd --system \
+    --gid sandboxgroup \
+    --create-home \
+    --home-dir /home/sandboxuser \
+    sandboxuser
 
-# 5. Set up the working directory
+# Working directory
 WORKDIR /app
 
-# 6. Change ownership of the app directory to the non-root user
+# Change ownership
 RUN chown -R sandboxuser:sandboxgroup /app
 
-# 7. Switch to the non-root user for all subsequent operations
+# Switch to non-root user
 USER sandboxuser
 
-# 8. This container's job is to stay alive so the FastAPI server can "exec" commands into it.
-# 'tail -f /dev/null' is a standard way to keep a container running without consuming CPU.
+# =========================
+# PREINSTALL COMMON MODULES
+# =========================
+
+RUN python3 -m pip install --user --no-cache-dir \
+    requests \
+    beautifulsoup4 \
+    lxml \
+    pyyaml \
+    python-dotenv \
+    flask \
+    fastapi \
+    uvicorn \
+    aiohttp \
+    httpx \
+    cryptography \
+    pyjwt \
+    bcrypt \
+    passlib \
+    markdown \
+    bleach \
+    dill \
+    joblib \
+    numpy \
+    pandas \
+    scikit-learn
+
+# Keep container alive for docker exec
 CMD ["tail", "-f", "/dev/null"]
