@@ -32,6 +32,16 @@ This architecture significantly improves reasoning precision and audit reliabili
 
 ---
 
+<h2>System Architecture</h2>
+
+<p align="center">
+  <img src="./assets/output.png" width="900"/>
+  <br>
+  <em>Figure: Multi-Agent Security Workflow</em>
+</p>
+
+---
+
 ## 🧪 Dynamic Sandbox Verification
 
 Instead of relying purely on static analysis:
