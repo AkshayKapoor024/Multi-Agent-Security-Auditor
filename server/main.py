@@ -187,6 +187,7 @@ async def get_user_chat_history(request:Request):
             return JSONResponse(content={'chat_histories':required_chat_history},status_code=200)
             
     except Exception as e:
+        logging.error(f'Error : {str(e)}')
         return JSONResponse(content={'error':str(e)},status_code=500)
     
     
@@ -214,9 +215,14 @@ async def get_chat_history(userid:ChatId,request:Request):
             chat_history_retrieved['created_at'] = str(chat_history_retrieved['created_at'])
             chat_history_retrieved['updated_at'] = str(chat_history_retrieved['updated_at'])
             
+            for message in chat_history_retrieved['messages']:
+                if 'created_at' in message:
+                    message['created_at'] = str(message['created_at'])
+            
             return JSONResponse(content={'chat_history':chat_history_retrieved},status_code=200)
             
     except Exception as e:
+        logging.error(f'Error : {str(e)}')
         return JSONResponse(content={'error':str(e)},status_code=500)
 
 
@@ -369,25 +375,33 @@ async def agent_call(request:Request,request_data:AI):
             ai_response = "Error generating response"
         
         # Storing response inchat history
+        # Creating messages list
+        messages_to_store = [
+            {
+                'role':'human',
+                'content':query,
+                'created_at': datetime.now(UTC)
+            }
+        ]
+
+        # Only store assistant response if not audit
+        if response.get('next_step') != 'AUDIT':
+            messages_to_store.append(
+                {
+                    'role':'assistant',
+                    'content':ai_response,
+                    'created_at': datetime.now(UTC)
+                }
+            )
+        
         chat_history.update_one(
             {'_id':ObjectId(chat_id),
             'user_id':user_id   
             },
             {
-                '$push':{
-                    'messages':{
-                        '$each':[
-                            {
-                                'role':'human',
-                                'content':query,
-                                'created_at': datetime.now(UTC)
-                            },
-                            {
-                                'role':'assistant',
-                                'content':ai_response,
-                                'created_at': datetime.now(UTC)
-                            }
-                        ]
+            '$push':{
+                'messages':{
+                    '$each': messages_to_store
                     }
                 },
                 '$set':{

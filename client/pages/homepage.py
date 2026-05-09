@@ -4,7 +4,7 @@ from api_client import (
     fetch_ai_response,
     logout_user,
     get_full_chat_history,
-    get_chat_history,
+    get_chat_history
 )
 
 st.set_page_config(
@@ -126,7 +126,7 @@ with st.sidebar:
             title = chat.get("title", "Untitled Chat")
 
             with st.container(border=True):
-                st.markdown(f"**{title[:32]}**")
+                st.markdown(f"**{title[:32].strip()}**")
                 st.caption(chat_id)
 
                 if st.button(

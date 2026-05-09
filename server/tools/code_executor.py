@@ -3,6 +3,50 @@ import subprocess
 import os 
 from server.logger.logger import logging
 import tempfile
+import ast
+import sys
+import importlib.util
+
+# Modules to ignore from downloading in sandbox container
+IGNORE_MODULES = {
+    "os",
+    "sys",
+    "json",
+    "subprocess",
+    "pathlib",
+    "re",
+    "time",
+    "typing",
+    "datetime",
+    "collections",
+    "asyncio",
+    "math",
+    "random",
+    "tempfile",
+    "uuid",
+    "logging"
+}
+
+# Helper function to extract imports from the codebase
+def extract_imports(code: str):
+    tree = ast.parse(code)
+
+    modules = set()
+
+    for node in ast.walk(tree):
+
+        if isinstance(node, ast.Import):
+
+            for alias in node.names:
+                modules.add(alias.name.split(".")[0])
+
+        elif isinstance(node, ast.ImportFrom):
+
+            if node.module:
+                modules.add(node.module.split(".")[0])
+
+    return list(modules)
+
 
 # Main tool for running code in the python sandbox isolated container 
 def execute_code_in_sandbox(code:str):
@@ -30,6 +74,56 @@ def execute_code_in_sandbox(code:str):
             check=True
         )
         logging.info('File written in sandbox container')
+        
+        
+        # Extracting imported modules from generated code
+        imported_modules = extract_imports(code)
+
+        # Filtering stdlib modules
+        required_modules = [
+            module for module in imported_modules
+            if module not in IGNORE_MODULES
+        ]
+
+        logging.info(f'Required external modules: {required_modules}')
+
+        # Installing only missing modules
+        for module in required_modules:
+
+            check_module = subprocess.run(
+                [
+                    'docker',
+                    'exec',
+                    'sandbox',
+                    'python3',
+                    '-c',
+                    f'import {module}'
+                ],
+                capture_output=True,
+                text=True
+            )
+
+            # Install only if missing
+            if check_module.returncode != 0:
+
+                logging.info(f'Installing missing module: {module}')
+
+                subprocess.run(
+                    [
+                        'docker',
+                        'exec',
+                        'sandbox',
+                        'pip',
+                        'install',
+                        '--no-cache-dir',
+                        module
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True
+                )
+
+                logging.info(f'Successfully installed: {module}')
         
         # Executing the temporary file in sandbox environment
         result = subprocess.run(
