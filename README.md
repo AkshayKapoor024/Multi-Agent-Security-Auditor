@@ -35,7 +35,7 @@ This architecture significantly improves reasoning precision and audit reliabili
 <h2>System Architecture</h2>
 
 <p align="center">
-  <img src="./assets/output.png" width="900"/>
+  <img src="./assets/output.png" width="200"/>
   <br>
   <em>Figure: Multi-Agent Security Workflow</em>
 </p>
