@@ -7,6 +7,8 @@ import ast
 import sys
 import importlib.util
 
+check_module=None
+
 # Modules to ignore from downloading in sandbox container
 IGNORE_MODULES = {
     "os",
