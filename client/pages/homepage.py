@@ -1,4 +1,7 @@
 import streamlit as st
+from datetime import datetime , UTC
+import pytz
+
 from api_client import (
     checkauth_user,
     fetch_ai_response,
@@ -12,6 +15,23 @@ st.set_page_config(
     page_icon="🛡️",
     layout="wide",
 )
+
+# Current UTC time
+india_time = datetime.now(pytz.timezone("Asia/Kolkata"))
+current_hour = india_time.hour
+
+# Greeting logic
+if 5 <= current_hour < 12:
+    greeting = "Good Morning"
+
+elif 12 <= current_hour < 17:
+    greeting = "Good Afternoon"
+
+elif 17 <= current_hour < 21:
+    greeting = "Good Evening"
+
+else:
+    greeting = "Good Night"
 
 st.markdown(
     """
@@ -139,6 +159,9 @@ with st.sidebar:
         st.caption("No chat histories found.")
 
 st.title("Vantaguard - Architectural Intelligence. Autonomous Assurance.")
+
+st.markdown(f"<h3 style='font-weight:500'> {greeting} , {st.session_state.user['name'].split(' ')[0]} 🙂‍↕️",unsafe_allow_html=True)
+
 st.markdown("---")
 
 for message in st.session_state.messages:

@@ -24,7 +24,12 @@ IGNORE_MODULES = {
     "random",
     "tempfile",
     "uuid",
-    "logging"
+    "logging",
+    "numpy",
+    "pandas",
+    "sklearn",
+    "torch",
+    "tensorflow"
 }
 
 # Helper function to extract imports from the codebase
@@ -87,43 +92,49 @@ def execute_code_in_sandbox(code:str):
 
         logging.info(f'Required external modules: {required_modules}')
 
-        # Installing only missing modules
         for module in required_modules:
 
             check_module = subprocess.run(
+            [
+                'docker',
+                'exec',
+                'sandbox',
+                'python3',
+                '-c',
+                f'import {module}'
+            ],
+            capture_output=True,
+            text=True
+        )
+
+        # Install only if missing
+        if check_module.returncode != 0:
+
+            logging.info(f'Installing missing module: {module}')
+
+            install_result = subprocess.run(
                 [
                     'docker',
                     'exec',
                     'sandbox',
                     'python3',
-                    '-c',
-                    f'import {module}'
+                    '-m',
+                    'pip',
+                    'install',
+                    '--user',
+                    module
                 ],
                 capture_output=True,
                 text=True
             )
 
-            # Install only if missing
-            if check_module.returncode != 0:
+            logging.info(f"INSTALL STDOUT: {install_result.stdout}")
+            logging.info(f"INSTALL STDERR: {install_result.stderr}")
 
-                logging.info(f'Installing missing module: {module}')
+            if install_result.returncode != 0:
+                raise Exception(install_result.stderr)
 
-                subprocess.run(
-                    [
-                        'docker',
-                        'exec',
-                        'sandbox',
-                        'pip',
-                        'install',
-                        '--no-cache-dir',
-                        module
-                    ],
-                    check=True,
-                    capture_output=True,
-                    text=True
-                )
-
-                logging.info(f'Successfully installed: {module}')
+            logging.info(f'Successfully installed: {module}')
         
         # Executing the temporary file in sandbox environment
         result = subprocess.run(
