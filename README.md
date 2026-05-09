@@ -289,9 +289,8 @@ streamlit run client/app.py
 
 Provide a valid GitHub repository URL with an auditing directive:
 
-Audit this repository:
-
 ```bash
+Audit this repository:
 https://github.com/username/project
 ```
 
@@ -330,17 +329,17 @@ The verifier automatically:
 
 Vantaguard maintains contextual memory using:
 
-MongoDB-backed chat histories
-LangGraph state reconstruction
-Session-based conversational continuity
+- MongoDB-backed chat histories
+- LangGraph state reconstruction
+- Session-based conversational continuity
 
 ### ✅ Secure Sandbox Architecture
 
 Verification executes inside:
 
-Non-root isolated Docker containers
-Ephemeral execution environments
-Dynamically managed runtime sandboxes
+- Non-root isolated Docker containers
+- Ephemeral execution environments
+- Dynamically managed runtime sandboxes
 
 This ensures safe exploit validation without exposing the host machine.
 
@@ -369,4 +368,4 @@ This project is intended strictly for:
 
 # 🛡️ Vantaguard
 
-***Architectural Intelligence. Autonomous Assurance***
+***Architectural Intelligence. Autonomous Assurance***- 
